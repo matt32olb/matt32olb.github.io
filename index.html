@@ -349,16 +349,7 @@
     <div class="reveal"><h2 class="section-title">Available Cards</h2></div>
     <div class="reveal"><div class="section-divider"></div></div>
 
-    <!-- SETUP NOTICE — shown until Google Sheet is connected -->
-    <div class="sheet-notice reveal" id="sheetNotice">
-      <strong>Setup needed:</strong> Open this file in a text editor, find <code>2PACX-1vS7WVm6BnBBmT0bqychVTbJi5BtwN6otRaNrDTNiPVy6GACAkOhyYJm-KfQOZ6I5XYGrUd7ZQ2eAFPr</code> near the bottom, and replace it with your Google Sheet ID. <a href="#" style="color:var(--gold);" onclick="document.getElementById('setupGuide').style.display='block';return false;">Show me how ↓</a>
-      <div id="setupGuide" style="display:none; margin-top:0.8rem; line-height:1.8; font-size:0.82rem;">
-        1. Open your Google Sheet → click <strong>File → Share → Publish to web</strong><br>
-        2. Choose <strong>Sheet1</strong> and <strong>CSV</strong> format → click <strong>Publish</strong><br>
-        3. Copy the URL — your Sheet ID is the long string between <code>/d/</code> and <code>/pub</code><br>
-        4. Paste it in the code where it says <code>YOUR_SHEET_ID_HERE</code>
-      </div>
-    </div>
+
 
     <div class="cards-grid reveal" id="cardsGrid">
       <div class="loading-state">
@@ -452,26 +443,14 @@
   </footer>
 
   <script>
-    // =====================================================
-    // STEP 1: Paste your Google Sheet ID below
-    // Replace YOUR_SHEET_ID_HERE with the actual Sheet ID
-    // =====================================================
-    const SHEET_ID = 'YOUR_SHEET_ID_HERE';
-
-    // Column mapping (matches the sheet columns A-G)
-    // A=player_name, B=sport, C=year_brand, D=grade, E=price, F=status, G=photo_url
+    // Google Sheet CSV URL — already connected!
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7WVm6BnBBmT0bqychVTbJi5BtwN6otRaNrDTNiPVy6GACAkOhyYJm-KfQOZ6I5XYGrUd7ZQ2eAFPr/pub?gid=0&single=true&output=csv';
 
     async function loadCards() {
       const grid = document.getElementById('cardsGrid');
 
-      if (SHEET_ID === 'YOUR_SHEET_ID_HERE') {
-        document.getElementById('sheetNotice').classList.add('show');
-        grid.innerHTML = `<div class="empty-state">👑 Your cards will appear here once your Google Sheet is connected.</div>`;
-        return;
-      }
-
       try {
-        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Sheet1`;
+        const url = CSV_URL;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Could not fetch sheet');
         const csv = await res.text();
@@ -522,8 +501,7 @@
         revealObserver();
 
       } catch (err) {
-        grid.innerHTML = `<div class="error-state">⚠ Could not load cards. Make sure your sheet is published to web and the Sheet ID is correct.</div>`;
-        document.getElementById('sheetNotice').classList.add('show');
+        grid.innerHTML = `<div class="error-state">⚠ Could not load cards. Make sure your Google Sheet is published to web.</div>`;
         console.error(err);
       }
     }
