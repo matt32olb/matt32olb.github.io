@@ -181,9 +181,15 @@
     }
     .card-img img {
       width: 100%; height: 100%; object-fit: cover;
-      transition: transform 0.4s;
+      transition: transform 0.4s, opacity 0.4s;
     }
     .card-item:hover .card-img img { transform: scale(1.04); }
+    .card-img { position: relative; }
+    .card-img img.photo-back {
+      position: absolute; inset: 0;
+      opacity: 0; transition: opacity 0.5s ease, transform 0.4s;
+    }
+    .card-item:hover .card-img img.photo-back { opacity: 1; }
     .card-img-placeholder {
       display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
       color: rgba(201,168,76,0.3); font-size: 0.75rem; letter-spacing: 0.1em;
@@ -215,6 +221,19 @@
       color: var(--cream-dim); background: var(--dark3);
       padding: 3px 10px; border-radius: 2px;
       border: 1px solid rgba(245,240,232,0.08);
+    }
+    .card-offer-btn {
+      display: block; width: 100%; margin-top: 0.8rem;
+      background: transparent; border: 1px solid rgba(201,168,76,0.4);
+      color: var(--gold); padding: 0.6rem 1rem;
+      font-family: 'Rajdhani', sans-serif; font-size: 0.75rem;
+      font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px;
+      transition: all 0.25s; text-align: center; text-decoration: none;
+    }
+    .card-offer-btn:hover {
+      background: var(--gold); color: var(--black);
+      border-color: var(--gold);
     }
 
     /* SHEET NOTICE */
@@ -408,13 +427,11 @@
       </div>
       <div class="form-group">
         <label>Interested In</label>
-        <select>
+        <select id="interestedIn">
           <option value="">Select a card or inquiry type...</option>
-          <option>Specific Card Inquiry</option>
-          <option>Make an Offer</option>
-          <option>Custom Order / Want List</option>
-          <option>Bulk Purchase</option>
-          <option>General Question</option>
+          <option value="__general__">General Question</option>
+          <option value="__bulk__">Bulk Purchase</option>
+          <option value="__wantlist__">Custom Order / Want List</option>
         </select>
       </div>
       <div class="form-group">
@@ -470,17 +487,36 @@
           return;
         }
 
-        grid.innerHTML = available.map(row => {
-          const [player, sport, yearBrand, grade, price, status, photoUrl] = row;
+        // Populate the "Interested In" dropdown with available cards
+        const select = document.getElementById('interestedIn');
+        const existingCardOptions = select.querySelectorAll('option.card-option');
+        existingCardOptions.forEach(o => o.remove());
+        const cardOptGroup = document.createElement('optgroup');
+        cardOptGroup.label = 'Available Cards';
+
+        grid.innerHTML = available.map((row, idx) => {
+          const [player, sport, yearBrand, grade, price, status, photoUrl, photoUrl2] = row;
           const isSold = (status || '').trim().toLowerCase() === 'sold';
           const imgSrc = (photoUrl || '').trim();
+          const imgSrc2 = (photoUrl2 || '').trim();
+          const cardId = `card-${idx}`;
+          const cardLabel = `${player}${yearBrand ? ' — ' + yearBrand : ''}${grade ? ' (' + grade + ')' : ''}`;
+
+          if (!isSold) {
+            const opt = document.createElement('option');
+            opt.value = cardId;
+            opt.textContent = cardLabel;
+            opt.className = 'card-option';
+            cardOptGroup.appendChild(opt);
+          }
 
           return `
-            <div class="card-item${isSold ? ' sold' : ''} reveal">
+            <div class="card-item${isSold ? ' sold' : ''} reveal" id="${cardId}">
               ${isSold ? '<div class="sold-badge">Sold</div>' : ''}
               <div class="card-img">
                 ${imgSrc
-                  ? `<img src="${imgSrc}" alt="${player}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=card-img-placeholder><span>🃏</span>Photo unavailable</div>'">`
+                  ? `<img class="photo-front" src="${imgSrc}" alt="${player}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=card-img-placeholder><span>🃏</span>Photo unavailable</div>'">
+                     ${imgSrc2 ? `<img class="photo-back" src="${imgSrc2}" alt="${player} back" loading="lazy">` : ''}`
                   : `<div class="card-img-placeholder"><span>🃏</span>Photo coming soon</div>`
                 }
               </div>
@@ -492,10 +528,15 @@
                   <div class="card-price">${price ? (price.startsWith('$') ? price : '$' + price) : 'Make offer'}</div>
                   ${grade ? `<div class="card-grade">${grade}</div>` : ''}
                 </div>
+                ${!isSold ? `<a class="card-offer-btn" href="#contact" onclick="selectCard('${cardId}', '${cardLabel.replace(/'/g, "\\'")}')">Make an Offer</a>` : ''}
               </div>
             </div>
           `;
         }).join('');
+
+        if (cardOptGroup.children.length > 0) {
+          select.insertBefore(cardOptGroup, select.children[1]);
+        }
 
         // Re-trigger reveal on new cards
         revealObserver();
@@ -523,6 +564,15 @@
         rows.push(cols);
       }
       return rows;
+    }
+
+    // Called when "Make an Offer" button is clicked on a card
+    function selectCard(cardId, cardLabel) {
+      const select = document.getElementById('interestedIn');
+      // Find the matching option and select it
+      for (const opt of select.options) {
+        if (opt.value === cardId) { select.value = cardId; break; }
+      }
     }
 
     // Scroll reveal
