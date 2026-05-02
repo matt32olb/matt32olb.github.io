@@ -414,31 +414,38 @@
     <div class="reveal"><p class="section-label">Get In Touch</p></div>
     <div class="reveal"><h2 class="section-title">Make an Offer</h2></div>
     <div class="reveal"><div class="section-divider"></div></div>
-    <form class="contact-form reveal" id="contactForm">
+    <form class="contact-form reveal" id="contactForm" action="https://formspree.io/f/xnjwjpre" method="POST">
       <div class="form-row">
         <div class="form-group">
           <label>Your Name</label>
-          <input type="text" placeholder="John Smith" required />
+          <input type="text" name="name" placeholder="John Smith" required />
         </div>
         <div class="form-group">
           <label>Email Address</label>
-          <input type="email" placeholder="john@email.com" required />
+          <input type="email" name="email" placeholder="john@email.com" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>X Handle</label>
+          <input type="text" name="x_handle" placeholder="@mrcardking" />
+        </div>
+        <div class="form-group">
+          <label>Your Offer Price</label>
+          <input type="text" name="offer_price" placeholder="$250" />
         </div>
       </div>
       <div class="form-group">
-        <label>Interested In</label>
-        <select id="interestedIn">
-          <option value="">Select a card or inquiry type...</option>
-          <option value="__general__">General Question</option>
-          <option value="__bulk__">Bulk Purchase</option>
-          <option value="__wantlist__">Custom Order / Want List</option>
+        <label>Card You're Interested In</label>
+        <select id="interestedIn" name="card">
+          <option value="">Select a card...</option>
         </select>
       </div>
       <div class="form-group">
         <label>Message</label>
-        <textarea placeholder="Tell me which card you're interested in, your offer, or any questions..."></textarea>
+        <textarea name="message" placeholder="Any additional details about your offer..."></textarea>
       </div>
-      <button type="submit" class="form-submit">Send Message 👑</button>
+      <button type="submit" class="form-submit">Send Offer 👑</button>
     </form>
     <div class="success-msg reveal" id="successMsg">
       ✦ Message received! I'll get back to you within 24 hours.
@@ -535,7 +542,7 @@
         }).join('');
 
         if (cardOptGroup.children.length > 0) {
-          select.insertBefore(cardOptGroup, select.children[1]);
+          select.appendChild(cardOptGroup);
         }
 
         // Re-trigger reveal on new cards
@@ -588,11 +595,32 @@
       document.querySelectorAll('.reveal:not(.visible)').forEach(el => obs.observe(el));
     }
 
-    // Contact form
-    document.getElementById('contactForm').addEventListener('submit', function(e) {
+    // Contact form — submit to Formspree
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      this.style.display = 'none';
-      document.getElementById('successMsg').style.display = 'block';
+      const form = this;
+      const btn = form.querySelector('.form-submit');
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+          form.style.display = 'none';
+          document.getElementById('successMsg').style.display = 'block';
+        } else {
+          btn.textContent = 'Send Offer 👑';
+          btn.disabled = false;
+          alert('Something went wrong. Please try again.');
+        }
+      } catch(err) {
+        btn.textContent = 'Send Offer 👑';
+        btn.disabled = false;
+        alert('Something went wrong. Please try again.');
+      }
     });
 
     // Init
